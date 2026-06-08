@@ -1,4 +1,4 @@
-# 🛸 Antigravity Mini-Agency Orchestrator
+# 🛸 Mini-Agency Orchestrator
 
 > **Transform your local workspace into a self-orchestrating, multi-role software agency under human control.**
 
