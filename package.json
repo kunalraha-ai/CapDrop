@@ -1,0 +1,63 @@
+{
+  "name": "antigravity-agency",
+  "displayName": "Antigravity Mini-Agency Orchestrator",
+  "description": "Orchestrates a local multi-persona developer agent loop inside VS Code.",
+  "version": "0.1.0",
+  "publisher": "antigravity",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "antigravity-agency.login",
+        "title": "Antigravity Agency: Authenticate with Supabase"
+      },
+      {
+        "command": "antigravity-agency.generateSpecs",
+        "title": "Antigravity Agency: Generate Local Workspace Specs"
+      },
+      {
+        "command": "antigravity-agency.startAgent",
+        "title": "Antigravity Agency: Start Active Persona Session"
+      },
+      {
+        "command": "antigravity-agency.runBuild",
+        "title": "Antigravity Agency: Run Integration Expert Build Loop"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack --mode development",
+    "watch": "webpack --watch --mode development",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "lint": "eslint src --ext ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.4",
+    "dotenv": "^16.4.5",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@types/vscode": "^1.80.0",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^7.12.0",
+    "@typescript-eslint/parser": "^7.12.0",
+    "eslint": "^8.57.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
