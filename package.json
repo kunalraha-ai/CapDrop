@@ -11,7 +11,11 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onCommand:antigravity-agency.login",
+    "onCommand:antigravity-agency.generateSpecs",
+    "onCommand:antigravity-agency.startAgent",
+    "onCommand:antigravity-agency.runBuild",
+    "onUri"
   ],
   "main": "./dist/extension.js",
   "contributes": {

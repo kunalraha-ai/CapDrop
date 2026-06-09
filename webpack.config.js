@@ -32,5 +32,13 @@ module.exports = {
       }
     ]
   },
-  target: "node" // Extensions run in a node context
+  target: "node", // Extensions run in a node context
+  // Suppress harmless optional-dependency warnings from `ws` package.
+  // `bufferutil` and `utf-8-validate` are native addons that ws can use
+  // for performance but works correctly without them.
+  ignoreWarnings: [
+    /Can't resolve 'bufferutil'/,
+    /Can't resolve 'utf-8-validate'/,
+  ],
 };
+

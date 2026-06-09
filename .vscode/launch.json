@@ -8,11 +8,13 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "c:/Users/kunal/OneDrive/pineapple/Service"
+        "--folder-uri",
+        "file:///c:/Users/kunal/OneDrive/pineapple/Service"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
-      ]
+      ],
+      "preLaunchTask": "npm: compile"
     }
   ]
 }

@@ -113,7 +113,18 @@ export async function runSpecGeneration(requirements: string) {
   );
 }
 
+let _agentRunnerDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+
 export async function runAgentRunner(context: vscode.ExtensionContext) {
+  // Debounce: ignore calls within 2s of a previous invocation (e.g. rapid persona shifts)
+  if (_agentRunnerDebounceTimer) {
+    console.log("[AgentRunner] Debounced — already queued.");
+    return;
+  }
+  _agentRunnerDebounceTimer = setTimeout(() => {
+    _agentRunnerDebounceTimer = undefined;
+  }, 2000);
+
   const activePersona = context.globalState.get<string>("activePersona") || "backend";
   const _sessionId = context.globalState.get<string>("activeSessionId") || "default-session";
 

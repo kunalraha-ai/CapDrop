@@ -1,5 +1,45 @@
 import { WebSocketServer, WebSocket } from "ws";
 import * as vscode from "vscode";
+import * as https from "https";
+import * as http from "http";
+import { URL } from "url";
+
+/**
+ * Protocol-aware HTTP/HTTPS GET helper.
+ * Routes to node:http for http:// URLs (local Supabase) and node:https for https://.
+ */
+function httpGet(urlStr: string, headers: Record<string, string>): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const url = new URL(urlStr);
+      const isHttps = url.protocol === "https:";
+      const defaultPort = isHttps ? 443 : 80;
+      const options: https.RequestOptions = {
+        method: "GET",
+        hostname: url.hostname,
+        port: url.port ? parseInt(url.port, 10) : defaultPort,
+        path: url.pathname + url.search,
+        headers,
+      };
+      const transport = isHttps ? https : http;
+      const req = transport.request(options, (res) => {
+        let body = "";
+        res.on("data", (chunk: Buffer) => (body += chunk));
+        res.on("end", () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(body);
+          } else {
+            reject(new Error(`GET failed: ${res.statusCode} ${body}`));
+          }
+        });
+      });
+      req.on("error", reject);
+      req.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 let wss: WebSocketServer | undefined;
 let activeConnection: WebSocket | undefined;
@@ -114,33 +154,8 @@ async function fetchPersonaPromptFromSupabase(
       headers["Authorization"] = `Bearer ${sessionToken}`;
     }
 
-    // Use GET instead of POST — use native https.get equivalent via a GET wrapper
-    const https = require("https");
-    const { URL } = require("url");
-
-    const result = await new Promise<string>((resolve, reject) => {
-      const url = new URL(queryUrl);
-      const options = {
-        method: "GET",
-        hostname: url.hostname,
-        port: url.port || 443,
-        path: url.pathname + url.search,
-        headers,
-      };
-      const req = https.request(options, (res: any) => {
-        let body = "";
-        res.on("data", (chunk: any) => (body += chunk));
-        res.on("end", () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(body);
-          } else {
-            reject(new Error(`Supabase GET failed: ${res.statusCode} ${body}`));
-          }
-        });
-      });
-      req.on("error", reject);
-      req.end();
-    });
+    // Use protocol-aware GET helper (supports both http:// and https://)
+    const result = await httpGet(queryUrl, headers);
 
     const rows: Array<{ system_prompt: string }> = JSON.parse(result);
     if (rows && rows.length > 0 && rows[0].system_prompt) {
