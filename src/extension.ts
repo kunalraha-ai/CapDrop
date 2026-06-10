@@ -7,6 +7,10 @@ import { startLocalServer, stopLocalServer } from "./server";
 import { runAgentRunner, runSpecGeneration } from "./runner";
 import { httpsPost } from "./http";
 import { runIntegrationLoop } from "./integration";
+import { openCapsuleLibrary } from "./library";
+
+// ─── Shared output channel is defined in logger.ts ──────────────────────────
+import { agentOutputChannel } from "./logger";
 
 // Load environment variables if .env exists in workspace root
 function loadEnv() {
@@ -23,8 +27,17 @@ function loadEnv() {
 let codeVerifier: string | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
+  agentOutputChannel.appendLine("Antigravity Mini-Agency Orchestrator activated.");
+  context.subscriptions.push(agentOutputChannel);
   console.log("Antigravity Mini-Agency Orchestrator is now active!");
   loadEnv();
+
+  // Load initial active team
+  let activeTeam = context.globalState.get<string[]>("activeTeam");
+  if (!activeTeam || activeTeam.length === 0) {
+    activeTeam = ["ui_ux", "backend", "qa", "security", "integration"];
+    context.globalState.update("activeTeam", activeTeam);
+  }
 
   // Retrieve Supabase URL & Anon Key from env or user settings
   const supabaseUrl = process.env.SUPABASE_URL || vscode.workspace.getConfiguration("antigravityAgency").get<string>("supabaseUrl");
@@ -165,7 +178,12 @@ export function activate(context: vscode.ExtensionContext) {
     await runIntegrationLoop(context, workspaceRoot, buildCommand.trim());
   });
 
-  context.subscriptions.push(loginCmd, generateSpecsCmd, startAgentCmd, runBuildCmd);
+  // Command 5: Open Capsule Library webview
+  const openLibraryCmd = vscode.commands.registerCommand("antigravity-agency.openCapsuleLibrary", () => {
+    openCapsuleLibrary(context);
+  });
+
+  context.subscriptions.push(loginCmd, generateSpecsCmd, startAgentCmd, runBuildCmd, openLibraryCmd);
 }
 
 export function deactivate() {

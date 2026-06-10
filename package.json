@@ -15,7 +15,9 @@
     "onCommand:antigravity-agency.generateSpecs",
     "onCommand:antigravity-agency.startAgent",
     "onCommand:antigravity-agency.runBuild",
-    "onUri"
+    "onCommand:antigravity-agency.openCapsuleLibrary",
+    "onUri",
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -35,6 +37,10 @@
       {
         "command": "antigravity-agency.runBuild",
         "title": "Antigravity Agency: Run Integration Expert Build Loop"
+      },
+      {
+        "command": "antigravity-agency.openCapsuleLibrary",
+        "title": "Antigravity Agency: Open Capsule Library"
       }
     ]
   },
@@ -43,6 +49,7 @@
     "compile": "webpack --mode development",
     "watch": "webpack --watch --mode development",
     "package": "webpack --mode production --devtool hidden-source-map",
+    "deploy": "vsce package && code --install-extension antigravity-agency-0.1.0.vsix",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "lint": "eslint src --ext ts"

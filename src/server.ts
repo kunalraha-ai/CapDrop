@@ -3,6 +3,8 @@ import * as vscode from "vscode";
 import * as https from "https";
 import * as http from "http";
 import { URL } from "url";
+import { ALL_PERSONAS } from "./prompts";
+import { agentOutputChannel } from "./logger";
 
 /**
  * Protocol-aware HTTP/HTTPS GET helper.
@@ -54,53 +56,74 @@ export interface WebSocketMessage<T = any> {
 export function startLocalServer(port: number, context: vscode.ExtensionContext) {
   try {
     if (wss) {
-      console.log("WebSocket server is already running. Stopping it first.");
+      agentOutputChannel.appendLine("[WebSocket Server] WebSocket server is already running. Stopping it first.");
       stopLocalServer();
     }
 
     wss = new WebSocketServer({ port });
-    console.log(`WebSocket Server started on ws://localhost:${port}`);
+    agentOutputChannel.appendLine(`[WebSocket Server] WebSocket Server started on ws://localhost:${port}`);
 
     wss.on("connection", (ws) => {
-      console.log("Tauri Capsule client connected to VS Code Extension");
+      agentOutputChannel.appendLine("[WebSocket Server] Tauri Capsule client connected to VS Code Extension");
       activeConnection = ws;
+
+      // Sync active team on connection
+      const activeTeamIds = context.globalState.get<string[]>("activeTeam") || ["ui_ux", "backend", "qa", "security", "integration"];
+      const activeTeamObjects = activeTeamIds.map(id => ALL_PERSONAS.find(p => p.id === id)).filter(Boolean);
+      ws.send(JSON.stringify({
+        event: "team_sync",
+        data: { team: activeTeamObjects },
+        timestamp: new Date().toISOString()
+      }));
 
       ws.on("message", async (rawMessage) => {
         try {
           const payload: WebSocketMessage = JSON.parse(rawMessage.toString());
-          console.log(`Received WS message: ${payload.event}`, payload.data);
+          agentOutputChannel.appendLine(`[WebSocket Server] Received WS message: ${payload.event} | Data: ${JSON.stringify(payload.data)}`);
 
           switch (payload.event) {
             case "persona_shift":
+              agentOutputChannel.appendLine(`[WebSocket Server] Shifting to persona: ${payload.data.persona}`);
               await handlePersonaShift(payload.data, context);
               break;
+            case "open_library":
+              agentOutputChannel.appendLine("[WebSocket Server] Execution triggered for open_library command");
+              try {
+                await vscode.commands.executeCommand("antigravity-agency.openCapsuleLibrary");
+                agentOutputChannel.appendLine("[WebSocket Server] openCapsuleLibrary command executed successfully");
+              } catch (cmdErr: any) {
+                agentOutputChannel.appendLine(`[WebSocket Server] Error executing openCapsuleLibrary command: ${cmdErr.message || cmdErr}`);
+                vscode.window.showErrorMessage(`Failed to open Capsule Library: ${cmdErr.message || cmdErr}`);
+              }
+              break;
             default:
-              console.warn(`Unhandled WebSocket event: ${payload.event}`);
+              agentOutputChannel.appendLine(`[WebSocket Server] Unhandled event: ${payload.event}`);
           }
         } catch (err: any) {
-          console.error("Error parsing WebSocket message:", err);
+          agentOutputChannel.appendLine(`[WebSocket Server] Error parsing WS message: ${err.message || err}`);
         }
       });
 
       ws.on("close", () => {
-        console.log("Tauri Capsule client disconnected");
+        agentOutputChannel.appendLine("[WebSocket Server] Tauri Capsule client disconnected");
         if (activeConnection === ws) {
           activeConnection = undefined;
         }
       });
 
       ws.on("error", (error) => {
-        console.error("WebSocket client connection error:", error);
+        agentOutputChannel.appendLine(`[WebSocket Server] WebSocket client connection error: ${error.message || error}`);
       });
     });
 
     wss.on("error", (error: any) => {
       if (error.code === "EADDRINUSE") {
+        agentOutputChannel.appendLine(`[WebSocket Server] Error: Port ${port} is already in use`);
         vscode.window.showWarningMessage(
           `Local port ${port} is already in use. Ensure no other agent sessions are running.`
         );
       } else {
-        console.error("WebSocket server error:", error);
+        agentOutputChannel.appendLine(`[WebSocket Server] Server error: ${error.message || error}`);
       }
     });
 
@@ -119,15 +142,36 @@ export function stopLocalServer() {
 }
 
 export function sendStatusToTauri(event: string, data: any) {
-  if (activeConnection && activeConnection.readyState === WebSocket.OPEN) {
-    const message: WebSocketMessage = {
+  if (wss) {
+    const message = JSON.stringify({
       event,
       data,
       timestamp: new Date().toISOString()
-    };
-    activeConnection.send(JSON.stringify(message));
+    });
+    for (const client of wss.clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    }
   } else {
-    console.log("Cannot send status: No active Tauri connection");
+    console.log("Cannot send status: No running WebSocket server");
+  }
+}
+
+export function broadcastActiveTeam(team: any[]) {
+  if (wss) {
+    const message = JSON.stringify({
+      event: "team_sync",
+      data: { team },
+      timestamp: new Date().toISOString()
+    });
+    for (const client of wss.clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    }
+  } else {
+    console.log("Cannot broadcast active team: No running WebSocket server");
   }
 }
 

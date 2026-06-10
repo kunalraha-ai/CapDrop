@@ -2,6 +2,8 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
+export const agentOutputChannel = vscode.window.createOutputChannel("Antigravity Agent");
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ProposedChange {
