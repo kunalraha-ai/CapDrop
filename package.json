@@ -2,7 +2,7 @@
   "name": "capdrop",
   "displayName": "CapDrop",
   "description": "Orchestrates a local multi-persona developer agent loop inside VS Code.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "antigravity",
   "icon": "icon.png",
   "engines": {
@@ -36,7 +36,7 @@
     "compile": "webpack --mode development",
     "watch": "webpack --watch --mode development",
     "package": "webpack --mode production --devtool hidden-source-map",
-    "deploy": "vsce package && code --install-extension capdrop-0.1.0.vsix",
+    "deploy": "vsce package && code --install-extension capdrop-0.1.1.vsix",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "lint": "eslint src --ext ts"
