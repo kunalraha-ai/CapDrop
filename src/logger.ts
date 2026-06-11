@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 
-export const agentOutputChannel = vscode.window.createOutputChannel("Antigravity Agent");
+export const agentOutputChannel = vscode.window.createOutputChannel("CapDrop Agent");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

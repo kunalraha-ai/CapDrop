@@ -3,7 +3,6 @@ import * as fs from "fs";
 import * as path from "path";
 import { runAndDisplay, writeExecutionTrace, ExecutionTrace } from "./terminal";
 import { writeIntentLog, updateIntentLogStatus } from "./logger";
-import { runValidationGate } from "./validator";
 
 // ─── Max auto-correction iterations before forcing human review ───────────────
 const MAX_CORRECTION_LOOPS = 3;
@@ -165,15 +164,7 @@ export async function runIntegrationLoop(
       validation_hooks: ["terminal_output", "terminal_traces.json"],
     });
 
-    // ── Validation gate before applying corrections ──────────────────────────
-    const verdict = await runValidationGate(context, workspaceRoot);
-
-    if (verdict === "rejected") {
-      vscode.window.showErrorMessage(
-        `🚫 Integration Expert: Correction plan rejected by validator on ${header}. Aborting loop.`
-      );
-      return false;
-    }
+    // No-op validation gate (Supabase / validation removed)
 
     // ── Show correction suggestions in VS Code ───────────────────────────────
     if (attempt < MAX_CORRECTION_LOOPS) {

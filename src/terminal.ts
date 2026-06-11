@@ -136,7 +136,7 @@ let _outputChannel: vscode.OutputChannel | undefined;
 
 function getOutputChannel(): vscode.OutputChannel {
   if (!_outputChannel) {
-    _outputChannel = vscode.window.createOutputChannel("Antigravity — Agent Terminal");
+    _outputChannel = vscode.window.createOutputChannel("CapDrop — Agent Terminal");
   }
   return _outputChannel;
 }

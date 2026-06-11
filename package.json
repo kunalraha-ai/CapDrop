@@ -1,9 +1,10 @@
 {
-  "name": "antigravity-agency",
-  "displayName": "Antigravity Mini-Agency Orchestrator",
+  "name": "capdrop",
+  "displayName": "CapDrop",
   "description": "Orchestrates a local multi-persona developer agent loop inside VS Code.",
   "version": "0.1.0",
   "publisher": "antigravity",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -11,36 +12,25 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:antigravity-agency.login",
-    "onCommand:antigravity-agency.generateSpecs",
-    "onCommand:antigravity-agency.startAgent",
-    "onCommand:antigravity-agency.runBuild",
-    "onCommand:antigravity-agency.openCapsuleLibrary",
-    "onUri",
+    "onCommand:capdrop.startAgent",
+    "onCommand:capdrop.runBuild",
+    "onCommand:capdrop.openCapsuleLibrary",
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "antigravity-agency.login",
-        "title": "Antigravity Agency: Authenticate with Supabase"
+        "command": "capdrop.startAgent",
+        "title": "CapDrop: Start Active Persona Session"
       },
       {
-        "command": "antigravity-agency.generateSpecs",
-        "title": "Antigravity Agency: Generate Local Workspace Specs"
+        "command": "capdrop.runBuild",
+        "title": "CapDrop: Run Integration Expert Build Loop"
       },
       {
-        "command": "antigravity-agency.startAgent",
-        "title": "Antigravity Agency: Start Active Persona Session"
-      },
-      {
-        "command": "antigravity-agency.runBuild",
-        "title": "Antigravity Agency: Run Integration Expert Build Loop"
-      },
-      {
-        "command": "antigravity-agency.openCapsuleLibrary",
-        "title": "Antigravity Agency: Open Capsule Library"
+        "command": "capdrop.openCapsuleLibrary",
+        "title": "CapDrop: Open Capsule Library"
       }
     ]
   },
@@ -49,14 +39,12 @@
     "compile": "webpack --mode development",
     "watch": "webpack --watch --mode development",
     "package": "webpack --mode production --devtool hidden-source-map",
-    "deploy": "vsce package && code --install-extension antigravity-agency-0.1.0.vsix",
+    "deploy": "vsce package && code --install-extension capdrop-0.1.0.vsix",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "lint": "eslint src --ext ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.4",
-    "dotenv": "^16.4.5",
     "ws": "^8.17.0"
   },
   "devDependencies": {
