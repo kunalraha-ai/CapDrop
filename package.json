@@ -12,9 +12,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:capdrop.startAgent",
-    "onCommand:capdrop.runBuild",
-    "onCommand:capdrop.openCapsuleLibrary",
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
