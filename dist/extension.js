@@ -366,7 +366,7 @@ function openCapsuleLibrary(context) {
             try {
                 logger_1.agentOutputChannel.appendLine(`[Capsule Library] Received command from webview: ${message.command}`);
                 switch (message.command) {
-                    case "updateTeam":
+                    case "updateTeam": {
                         const teamIds = message.teamIds;
                         logger_1.agentOutputChannel.appendLine(`[Capsule Library] Updating active team to: ${JSON.stringify(teamIds)}`);
                         await context.globalState.update("activeTeam", teamIds);
@@ -378,6 +378,7 @@ function openCapsuleLibrary(context) {
                         // Re-render webview to sync status
                         updateWebviewContent(context);
                         break;
+                    }
                 }
             }
             catch (msgErr) {

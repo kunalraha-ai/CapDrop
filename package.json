@@ -1,14 +1,40 @@
 {
   "name": "capdrop",
   "displayName": "CapDrop",
-  "description": "Orchestrates a local multi-persona developer agent loop inside VS Code.",
+  "description": "Drop a capsule. Shift your AI's role. Ship better code. Role-based system prompts that keep AI coding assistants in their lane.",
   "version": "0.1.2",
   "publisher": "antigravity",
   "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/antigravity-dev/capdrop"
+  },
+  "homepage": "https://github.com/antigravity-dev/capdrop#readme",
+  "bugs": {
+    "url": "https://github.com/antigravity-dev/capdrop/issues"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "copilot",
+    "gemini",
+    "prompt",
+    "persona",
+    "capsule",
+    "boundary",
+    "vibe-coding",
+    "system-prompt"
+  ],
+  "galleryBanner": {
+    "color": "#0d0d0d",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
+    "AI",
     "Other"
   ],
   "activationEvents": [

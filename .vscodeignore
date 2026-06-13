@@ -6,3 +6,5 @@ webpack.config.js
 tsconfig.json
 *.vsix
 out/**
+.env
+send-persona.js

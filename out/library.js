@@ -1,114 +1,121 @@
-import * as vscode from "vscode";
-import { ALL_PERSONAS, PersonaDefinition } from "./prompts";
-import { broadcastActiveTeam } from "./server";
-import { agentOutputChannel } from "./logger";
-
-let currentPanel: vscode.WebviewPanel | undefined;
-
-export function openCapsuleLibrary(context: vscode.ExtensionContext) {
-  try {
-    agentOutputChannel.appendLine("[Capsule Library] openCapsuleLibrary invoked");
-    if (currentPanel) {
-      agentOutputChannel.appendLine("[Capsule Library] Revealing existing webview panel");
-      currentPanel.reveal(vscode.ViewColumn.One);
-      return;
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-
-    agentOutputChannel.appendLine("[Capsule Library] Creating new webview panel");
-    currentPanel = vscode.window.createWebviewPanel(
-      "capsuleLibrary",
-      "Capsule Library",
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-      }
-    );
-
-    currentPanel.onDidDispose(
-      () => {
-        agentOutputChannel.appendLine("[Capsule Library] Webview panel disposed");
-        currentPanel = undefined;
-      },
-      null,
-      context.subscriptions
-    );
-
-    // Update HTML content
-    updateWebviewContent(context);
-
-    // Handle messages from the webview
-    currentPanel.webview.onDidReceiveMessage(
-      async (message) => {
-        try {
-          agentOutputChannel.appendLine(`[Capsule Library] Received command from webview: ${message.command}`);
-          switch (message.command) {
-            case "updateTeam": {
-              const teamIds: string[] = message.teamIds;
-              agentOutputChannel.appendLine(`[Capsule Library] Updating active team to: ${JSON.stringify(teamIds)}`);
-              await context.globalState.update("activeTeam", teamIds);
-              
-              // Re-resolve team objects to broadcast to Tauri
-              const teamObjects = teamIds
-                .map((id) => ALL_PERSONAS.find((p) => p.id === id))
-                .filter((p): p is PersonaDefinition => !!p);
-              
-              broadcastActiveTeam(teamObjects);
-              
-              // Re-render webview to sync status
-              updateWebviewContent(context);
-              break;
-            }
-          }
-        } catch (msgErr: any) {
-          agentOutputChannel.appendLine(`[Capsule Library] Error handling message from webview: ${msgErr.message || msgErr}`);
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.openCapsuleLibrary = openCapsuleLibrary;
+const vscode = __importStar(require("vscode"));
+const prompts_1 = require("./prompts");
+const server_1 = require("./server");
+const logger_1 = require("./logger");
+let currentPanel;
+function openCapsuleLibrary(context) {
+    try {
+        logger_1.agentOutputChannel.appendLine("[Capsule Library] openCapsuleLibrary invoked");
+        if (currentPanel) {
+            logger_1.agentOutputChannel.appendLine("[Capsule Library] Revealing existing webview panel");
+            currentPanel.reveal(vscode.ViewColumn.One);
+            return;
         }
-      },
-      undefined,
-      context.subscriptions
-    );
-  } catch (err: any) {
-    agentOutputChannel.appendLine(`[Capsule Library] Error opening Capsule Library: ${err.message || err}`);
-    vscode.window.showErrorMessage(`Error opening Capsule Library: ${err.message || err}`);
-  }
-}
-
-function updateWebviewContent(context: vscode.ExtensionContext) {
-  try {
-    if (!currentPanel) {
-      agentOutputChannel.appendLine("[Capsule Library] updateWebviewContent called but currentPanel is undefined");
-      return;
+        logger_1.agentOutputChannel.appendLine("[Capsule Library] Creating new webview panel");
+        currentPanel = vscode.window.createWebviewPanel("capsuleLibrary", "Capsule Library", vscode.ViewColumn.One, {
+            enableScripts: true,
+            retainContextWhenHidden: true,
+        });
+        currentPanel.onDidDispose(() => {
+            logger_1.agentOutputChannel.appendLine("[Capsule Library] Webview panel disposed");
+            currentPanel = undefined;
+        }, null, context.subscriptions);
+        // Update HTML content
+        updateWebviewContent(context);
+        // Handle messages from the webview
+        currentPanel.webview.onDidReceiveMessage(async (message) => {
+            try {
+                logger_1.agentOutputChannel.appendLine(`[Capsule Library] Received command from webview: ${message.command}`);
+                switch (message.command) {
+                    case "updateTeam":
+                        const teamIds = message.teamIds;
+                        logger_1.agentOutputChannel.appendLine(`[Capsule Library] Updating active team to: ${JSON.stringify(teamIds)}`);
+                        await context.globalState.update("activeTeam", teamIds);
+                        // Re-resolve team objects to broadcast to Tauri
+                        const teamObjects = teamIds
+                            .map((id) => prompts_1.ALL_PERSONAS.find((p) => p.id === id))
+                            .filter((p) => !!p);
+                        (0, server_1.broadcastActiveTeam)(teamObjects);
+                        // Re-render webview to sync status
+                        updateWebviewContent(context);
+                        break;
+                }
+            }
+            catch (msgErr) {
+                logger_1.agentOutputChannel.appendLine(`[Capsule Library] Error handling message from webview: ${msgErr.message || msgErr}`);
+            }
+        }, undefined, context.subscriptions);
     }
-    agentOutputChannel.appendLine("[Capsule Library] Updating webview HTML content");
-
-  const activeTeamIds: string[] = context.globalState.get<string[]>("activeTeam") || [
-    "ui_ux",
-    "backend",
-    "qa",
-    "security",
-    "integration",
-  ];
-
-  // Resolve active team objects
-  const activeTeam = activeTeamIds
-    .map((id) => ALL_PERSONAS.find((p) => p.id === id))
-    .filter((p): p is PersonaDefinition => !!p);
-
-  // Resolve remaining library personas
-  const libraryPersonas = ALL_PERSONAS.filter(
-    (p) => !activeTeamIds.includes(p.id)
-  );
-
-  currentPanel.webview.html = getWebviewHtml(activeTeam, libraryPersonas);
-  } catch (err: any) {
-    agentOutputChannel.appendLine(`[Capsule Library] Error rendering webview content: ${err.message || err}`);
-  }
+    catch (err) {
+        logger_1.agentOutputChannel.appendLine(`[Capsule Library] Error opening Capsule Library: ${err.message || err}`);
+        vscode.window.showErrorMessage(`Error opening Capsule Library: ${err.message || err}`);
+    }
 }
-
-function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: PersonaDefinition[]): string {
-  const activeCardsHtml = activeTeam
-    .map(
-      (p, index) => `
+function updateWebviewContent(context) {
+    try {
+        if (!currentPanel) {
+            logger_1.agentOutputChannel.appendLine("[Capsule Library] updateWebviewContent called but currentPanel is undefined");
+            return;
+        }
+        logger_1.agentOutputChannel.appendLine("[Capsule Library] Updating webview HTML content");
+        const activeTeamIds = context.globalState.get("activeTeam") || [
+            "ui_ux",
+            "backend",
+            "qa",
+            "security",
+            "integration",
+        ];
+        // Resolve active team objects
+        const activeTeam = activeTeamIds
+            .map((id) => prompts_1.ALL_PERSONAS.find((p) => p.id === id))
+            .filter((p) => !!p);
+        // Resolve remaining library personas
+        const libraryPersonas = prompts_1.ALL_PERSONAS.filter((p) => !activeTeamIds.includes(p.id));
+        currentPanel.webview.html = getWebviewHtml(activeTeam, libraryPersonas);
+    }
+    catch (err) {
+        logger_1.agentOutputChannel.appendLine(`[Capsule Library] Error rendering webview content: ${err.message || err}`);
+    }
+}
+function getWebviewHtml(activeTeam, libraryPersonas) {
+    const activeCardsHtml = activeTeam
+        .map((p, index) => `
     <div class="card" draggable="true" data-id="${p.id}" data-index="${index}">
       <div class="card-glow" style="background: radial-gradient(circle at 50% 50%, ${p.accent}15, transparent 60%); border-color: ${p.accent}40;"></div>
       <span class="card-icon" style="background: ${p.accent}15; color: ${p.accent};">${p.icon}</span>
@@ -125,15 +132,12 @@ function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: Person
         <button class="action-btn remove-btn" title="Remove from Active Team" onclick="removePersona('${p.id}')">✕</button>
       </div>
     </div>
-  `
-    )
-    .join("");
-
-  const libraryCardsHtml = libraryPersonas.length === 0
-    ? `<div class="empty-state">All personas are currently active in your team.</div>`
-    : libraryPersonas
-        .map(
-          (p) => `
+  `)
+        .join("");
+    const libraryCardsHtml = libraryPersonas.length === 0
+        ? `<div class="empty-state">All personas are currently active in your team.</div>`
+        : libraryPersonas
+            .map((p) => `
     <div class="card library-card" data-id="${p.id}">
       <span class="card-icon" style="background: ${p.accent}15; color: ${p.accent};">${p.icon}</span>
       <div class="card-info">
@@ -144,11 +148,9 @@ function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: Person
         <button class="add-btn" style="background: ${p.accent}20; border-color: ${p.accent}40; color: ${p.accent};" onclick="addPersona('${p.id}')">➕ Add to Team</button>
       </div>
     </div>
-  `
-        )
-        .join("");
-
-  return `<!DOCTYPE html>
+  `)
+            .join("");
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -541,3 +543,4 @@ function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: Person
 </body>
 </html>`;
 }
+//# sourceMappingURL=library.js.map
