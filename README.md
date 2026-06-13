@@ -1,240 +1,285 @@
-# 🛸 Mini-Agency Orchestrator
+<div align="center">
 
-> **Transform your local workspace into a self-orchestrating, multi-role software agency under human control.**
+<img src="https://raw.githubusercontent.com/your-repo/capdrop/main/extension/icon.png" width="120" alt="CapDrop Logo" />
 
-The **Mini-Agency Orchestrator** is an automated Software Development Life Cycle (SDLC) platform. It merges a **Web Orchestrator**, a **Floating Capsule Desktop Overlay**, and a **Local VS Code Agent Extension** to coordinate a single-session, multi-role developer agent loop. It eliminates common agentic flaws such as context drift, multi-agent code collisions, and out-of-bounds generation.
+# CapDrop
 
----
+**Drop a capsule. Shift your AI's role. Ship better code.**
 
-## 💎 The Core Architecture Pillars
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/antigravity.capdrop?color=0d0d0d&label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=antigravity.capdrop)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/antigravity.capdrop?color=0d0d0d)](https://marketplace.visualstudio.com/items?itemName=antigravity.capdrop)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0d0d0d.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-```
-+-------------------------------------------------------------------------------+
-|                                                                               |
-|  [1. Local Spec Anchoring] -> [2. Floating Capsule UX] -> [3. Single Session] |
-|            |                          |                         |             |
-|    PRD/TRD Workspace Files      Drag-Drop Persona Shift   Sequential Prompting|
-|                                                                               |
-|  [4. Intent Validation Loop] <--------------------------- [5. Integration]   |
-|            |                                                    |             |
-|    Log Scrapes vs Spec Contracts                        SUBPROCESS Auto-Repair|
-|                                                                               |
-+-------------------------------------------------------------------------------+
-```
+[Install from Marketplace](#installation) · [Contribute a Capsule](CONTRIBUTING.md) · [Report a Bug](https://github.com/your-repo/capdrop/issues)
 
-1. **Local Spec Anchoring:** When requirements are generated, the platform dumps them as markdown files (`PRD.md`, `TRD.md`, `ARCHITECTURE.md`) directly into the workspace root. This provides a physical, local, un-degradable source of truth.
-2. **The Floating Capsule UX:** Role personas (UI/UX, Backend, QA, Security, Integration) are represented as borderless, translucent capsules that float on top of the desktop. Developers drag and drop these capsules directly into the IDE to trigger integration tasks.
-3. **Single-Agent, Multi-Role Execution:** Instead of running expensive and chaotic multi-agent environments, our system runs a **single local session** that sequentially shifts roles by injecting targeted system prompts, keeping the context window clean.
-4. **The Intent Validation Loop:** To bypass upload bottlenecks and preserve code privacy, the extension scrapes only the agent's internal reasoning logs (`intent_log.json`) and validates them against the TRD contracts in the cloud before any code is written.
-5. **The Integration Expert:** A dedicated Tech Lead persona that executes local build commands (like `npm run build`), parses error logs, and recursively repairs compile errors and API route mismatches before final commit.
+</div>
 
 ---
 
-## 🗺️ System Flow & Architecture
+## The Problem
 
-### High-Level Block Diagram
+AI coding assistants are powerful but undisciplined. Ask them to build a login form and you'll get a login form *plus* an auth controller, a database schema, and a session handler you never asked for.
 
-```mermaid
-graph TD
-    %% Cloud Services
-    subgraph Cloud [Cloud Layer - Supabase & DO]
-        Web[Next.js Web Orchestrator]
-        Supabase[Supabase DB / Realtime / Auth]
-        Validator[Intent Validation Edge Function]
-    end
+This creates tangled codebases where files are owned by no one, logic lives in the wrong layer, and integration becomes a debugging session.
 
-    %% Developer Local Desktop
-    subgraph Local [Developer Desktop Environment]
-        Tauri[Tauri Floating Capsule UX]
-        VSCode[VS Code Extension]
-        Agent[Local Agent Engine]
-        Workspace[Workspace Root]
-    end
+## The Solution
 
-    %% Sync & Actions
-    Web -->|Create Project & Specs| Supabase
-    Supabase -.->|Realtime Sync| VSCode
-    Tauri -->|Auth & Session Fetch| Supabase
-    Tauri -.->|Drag-and-Drop WS Event| VSCode
-    VSCode -->|Spawns / Updates Persona| Agent
-    Agent -->|Updates Code & Specs| Workspace
-    Agent -->|Uploads Reasoning Logs| Validator
-    Validator -->|Checks Contracts| Supabase
-    Validator -.->|Approve / Warnings| VSCode
+CapDrop gives your AI a **job title and a contract**. Each **Capsule** is a strict, role-specific system prompt that locks the AI into one lane — and when it hits the edge of its role, it stops and tells you exactly what needs to happen next instead of quietly doing someone else's job.
+
+```
+Drop UI/UX capsule  →  AI builds frontend only
+Drop Backend capsule →  AI builds server + database only
+Drop QA capsule     →  AI writes tests only, never touches production code
 ```
 
-### End-to-End Sequence Flow
+---
+
+## How It Works
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor Dev as Developer
-    participant Web as Next.js Web App
-    participant Tauri as Tauri Floating Capsule
-    participant Ext as VS Code Extension
-    participant Agent as Local Agent Engine
-    participant DB as Supabase Auth & DB
-    participant Val as Cloud Intent Validator
+flowchart TD
+    A([Developer opens workspace]) --> B[CapDrop activates on startup]
+    B --> C[Local WebSocket server starts on :5050]
+    C --> D{How do you want to shift capsule?}
 
-    Dev->>Web: 1. Input Project Requirements
-    Web->>DB: Save Specs & Set Up Active Session
-    DB-->>Ext: Sync Workspace Session State
-    Ext->>Dev: Write PRD.md & TRD.md to Workspace root
-    
-    Dev->>Tauri: Drag UI/UX Capsule into IDE
-    Tauri->>Ext: WebSocket Event (ws://localhost:5050 - Shift to UI/UX)
-    Ext->>Agent: Spawn Local Session (Inject UI/UX Prompt + Workspace Specs)
-    Agent->>Agent: Generate Code & Write reasoning to intent_log.json
-    
-    Agent->>Val: Post intent_log.json & Workspace Specs
-    Val->>Val: Evaluate LLM alignment (Gemini 2.0 Flash)
-    alt Intent Aligned
-        Val-->>Ext: Success (Approved)
-        Ext->>Agent: Write code edits to disk
-    else Intent Mismatched / API Breach
-        Val-->>Ext: Warning (Mismatch detected)
-        Ext->>Dev: Alert panel (Override / Abort / Auto-Replan)
-    end
-    
-    Dev->>Tauri: Drag Integration Expert Capsule into IDE
-    Tauri->>Ext: WebSocket Event (Shift to Integration)
-    Ext->>Agent: Trigger sub-processes (npm run build, tests)
-    loop Build Errors Found
-        Agent->>Agent: Parse compiler error trace & write fixes
-    end
-    Agent->>Dev: Success (Workspace Compiled & Checked)
+    D -->|Command Palette| E[CapDrop: Open Capsule Library]
+    D -->|Tauri Desktop Widget| F[Click capsule card in floating overlay]
+
+    E --> G[Select capsule from library grid]
+    F --> G
+
+    G --> H[Capsule system prompt compiled]
+    H --> I{PRD.md / TRD.md in workspace root?}
+
+    I -->|Yes| J[Specs appended as anchored constraints]
+    I -->|No| K[Capsule boundary rules applied standalone]
+
+    J --> L[Full system prompt injected into AI session]
+    K --> L
+
+    L --> M[intent_log.json written to .gemini/]
+    M --> N[AI executes within capsule boundary]
+    N --> O{AI hits boundary of its role?}
+
+    O -->|No| P[Task completed in lane ✅]
+    O -->|Yes| Q[CAPSULE BOUNDARY REACHED message output]
+    Q --> R[Developer switches to correct capsule]
+    R --> G
 ```
 
-### Agent Session State Machine
-This diagram shows the core transitions of a local agent session as capsules are dropped and validation runs:
+---
+
+## Capsules
+
+| Capsule | Role | Allowed Files | Forbidden |
+|---|---|---|---|
+| 🎨 **React Frontend** | Senior React Engineer | `.tsx`, `.jsx`, `/components`, `/pages`, `/ui` | Server files, database, `.env` |
+| ⚙️ **Backend Systems** | Senior Backend Engineer | `server.*`, `db.*`, `/routes`, `/migrations`, `.env` | Any frontend files |
+| 🧪 **QA Specialist** | Senior QA Engineer | `*.test.*`, `*.spec.*`, `/tests`, `/e2e` | Any production source code |
+| 🔒 **Security Audit** | App Security Engineer | `SECURITY_AUDIT.md` only | All production files |
+| 🔗 **Systems Integration** | Integration Auditor | Build configs, import paths, existing files with errors only | New features, new routes |
+| 🤪 **Emoji Decorator** | Chaos Frontend Agent | Frontend files — adds emojis | Backend files, anything outside `/ui` |
+| 📖 **Code Explainer** | Documentation Engineer | Existing files — adds docstrings only | Any runtime behavior changes |
+| 🌸 **Flower Decorator** | Botanical Frontend Agent | Frontend files — adds floral decorations | Backend files |
+
+Every capsule enforces a **hard boundary**. When the AI reaches the edge of its role it outputs:
+
+```
+CAPSULE BOUNDARY REACHED: This task requires backend work.
+Please switch to the Backend capsule to complete: [one sentence description].
+The frontend scaffold has been built to the extent possible.
+```
+
+---
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph VSCode ["VS Code Extension Host"]
+        EXT["extension.ts\nActivation + Auth"]
+        SERVER["server.ts\nWebSocket :5050"]
+        RUNNER["runner.ts\nSession Runner"]
+        PROMPTS["prompts.ts\nAll Capsule Definitions"]
+        LOGGER["logger.ts\nintent_log.json writer"]
+        VALIDATOR["validator.ts\nIntent Gate"]
+        TERMINAL["terminal.ts\nSecure Build Runner"]
+        INTEGRATION["integration.ts\nBuild Repair Loop"]
+        LIBRARY["library.ts\nWebview Panel"]
+    end
+
+    subgraph Tauri ["Tauri Desktop Widget (Optional)"]
+        APP["App.tsx\nCapsule Cards UI"]
+        RUST["main.rs\nWS Client + Session ID"]
+    end
+
+    subgraph Workspace ["Local Workspace"]
+        PRD["PRD.md (optional)"]
+        TRD["TRD.md (optional)"]
+        LOG[".gemini/intent_log.json"]
+    end
+
+    PROMPTS --> RUNNER
+    SERVER -->|persona_shift event| RUNNER
+    RUNNER --> LOGGER
+    RUNNER --> VALIDATOR
+    RUNNER --> TERMINAL
+    TERMINAL --> INTEGRATION
+    LIBRARY -->|team_sync event| SERVER
+    APP --> RUST
+    RUST -->|WebSocket message| SERVER
+    PRD --> RUNNER
+    TRD --> RUNNER
+    LOGGER --> LOG
+```
+
+---
+
+## Capsule Session State Machine
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Idle : Launch VS Code Extension
-    Idle --> LoadingSpecs : Drop Persona Capsule
-    LoadingSpecs --> CompilingContext : Read PRD.md / TRD.md
-    CompilingContext --> Planning : Load Persona Prompt & Compile Context
-    Planning --> ValidationPending : Output intent_log.json
-    
-    state ValidationPending {
-        [*] --> AnalyzingIntent
-        AnalyzingIntent --> Approved : Check matches TRD
-        AnalyzingIntent --> Warning : Mismatch found
-    }
+    [*] --> Idle : Extension activates on startup
 
-    Approved --> WritingCode : Trigger local disk edits
-    Warning --> ManualReview : Pause execution & show Alert Panel
-    
-    ManualReview --> WritingCode : User clicks 'Force Approve'
-    ManualReview --> Planning : User clicks 'Auto Replan'
-    ManualReview --> Idle : User clicks 'Abort'
+    Idle --> CapsuleSelected : Developer selects capsule
+    CapsuleSelected --> LoadingSpecs : Check workspace for PRD.md / TRD.md
 
-    WritingCode --> IntegrationRunning : Swap to Integration Expert Capsule
-    IntegrationRunning --> CompileTesting : Execute build & tests (npm run build)
-    
-    CompileTesting --> IntegrationRunning : [Errors Found] Parse logs and write repairs
-    CompileTesting --> Completed : [Build Passes] Commit code to branch
-    Completed --> Idle
-```
+    LoadingSpecs --> CompilingPrompt : Specs found — append to capsule prompt
+    LoadingSpecs --> CompilingPrompt : No specs — use capsule boundary rules only
 
-### Context Handoff & Prompt Compilation Flow
-How local constraints are assembled dynamically inside the extension memory, keeping the cloud database decoupled from actual codebase logic:
+    CompilingPrompt --> SessionActive : Prompt compiled and injected
+    SessionActive --> IntentLogged : intent_log.json written
 
-```mermaid
-graph LR
-    subgraph LocalWorkspace [Workspace Root]
-        PRD[PRD.md]
-        TRD[TRD.md]
-    end
+    IntentLogged --> ValidationGate : Supabase validator called (if configured)
+    ValidationGate --> Executing : Approved
+    ValidationGate --> Blocked : Rejected
+    ValidationGate --> Executing : Developer override
 
-    subgraph SupabaseDB [Supabase Cloud]
-        Prompt[Active Capsule Prompt]
-    end
+    Blocked --> Idle : Session aborted
 
-    subgraph ExtensionEngine [VS Code Extension Host]
-        Assembler[Context Compiler]
-        LLM[Gemini 1.5/2.0 Flash]
-    end
+    Executing --> BoundaryReached : AI hits capsule edge
+    Executing --> Completed : Task finished in lane
 
-    PRD -->|Read Workspace| Assembler
-    TRD -->|Read Workspace| Assembler
-    Prompt -->|Select Persona ID| Assembler
-
-    Assembler -->|Compile Prompt Context| LLM
-    LLM -->|Generate Intent Plan| WorkspaceWrite[intent_log.json]
+    BoundaryReached --> Idle : Developer switches capsule
+    Completed --> Idle : Ready for next capsule
 ```
 
 ---
 
-## 📂 Monorepo Structure
+## Project Structure
 
 ```
-├── web/                   # Next.js Web Orchestrator dashboard
-├── extension/             # VS Code Extension (TypeScript)
+capdrop/
+├── extension/                  # VS Code Extension (TypeScript)
 │   ├── src/
-│   │   ├── extension.ts   # Main activation and Supabase authPKCE handler
-│   │   ├── server.ts      # Local WebSocket Server on port 5050
-│   │   ├── runner.ts      # Agent Execution Loop & LLM client wrapper
-│   │   ├── http.ts        # Native Node.js HTTPS POST client
-│   │   └── prompts.ts     # PM, Architect, and DevOps base prompts
-│   ├── .vscode/
-│   │   └── launch.json    # Pre-configured workspace debugger launcher
-│   └── send-persona.js    # Mock WebSocket client for testing drops
-├── tauri-capsule/         # Tauri Desktop Widget (Rust + React)
-└── supabase/              # Database schema migrations & config
+│   │   ├── extension.ts        # Activation, auth, command registration
+│   │   ├── server.ts           # Local WebSocket server :5050
+│   │   ├── runner.ts           # Capsule session compiler and runner
+│   │   ├── prompts.ts          # ALL capsule definitions live here ←
+│   │   ├── logger.ts           # intent_log.json writer
+│   │   ├── validator.ts        # Intent validation gate
+│   │   ├── terminal.ts         # Secure build command executor
+│   │   ├── integration.ts      # Build repair loop
+│   │   ├── library.ts          # Capsule Library webview panel
+│   │   └── http.ts             # Native Node.js HTTP/HTTPS client
+│   ├── icon.png                # Extension icon (128x128)
+│   ├── package.json            # Extension manifest
+│   ├── README.md               # Marketplace README
+│   └── LICENSE                 # MIT License
+│
+├── tauri-capsule/              # Desktop Widget (Rust + React, optional)
+│   ├── src/
+│   │   ├── App.tsx             # Capsule card UI
+│   │   └── main.tsx            # React entry
+│   ├── src-tauri/
+│   │   ├── src/main.rs         # Rust WS client + session ID generation
+│   │   └── tauri.conf.json     # Borderless, always-on-top window config
+│   └── package.json
+│
+└── supabase/                   # Optional cloud validator (self-hosted)
+    ├── functions/
+    │   └── intent-validator/
+    │       └── index.ts        # Edge function: validates intent_log vs specs
     └── migrations/
-        └── 20260608000000_init.sql # Users, Projects, Sessions, and Capsule schemas
+        └── 20260608000000_init.sql
 ```
 
 ---
 
-## 🚀 Getting Started
+## Installation
 
-### 1. Database Setup (Supabase)
-Create a project on [Supabase](https://supabase.com) and initialize the tables using the Supabase CLI:
+### From the Marketplace
+
+Search **CapDrop** in the VS Code Extensions panel or install via:
+
 ```bash
-# Log in to your CLI
-supabase login
-
-# Run migrations
-supabase migration up
+code --install-extension antigravity.capdrop
 ```
 
-### 2. Configure Environment Variables
-Create a `.env` file at the root of the workspace:
+### From Source
+
 ```bash
-# LLM Provider Key (Kept local)
-GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
-
-# Supabase Configurations
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_ANON_KEY="eyJhbGciOi..."
+git clone https://github.com/your-repo/capdrop
+cd capdrop/extension
+npm install
+npm run deploy
 ```
-
-### 3. Compile and Debug the VS Code Extension
-1. Open the `extension` folder in VS Code.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Compile the typescript codebase:
-   ```bash
-   npm run compile
-   ```
-4. Press **`F5`** on your keyboard. This opens an **Extension Development Host** window with the `Service` project workspace pre-loaded.
-5. In the new window, open the Command Palette (`Ctrl+Shift+P` on Windows) and run:
-   * **`Antigravity Agency: Generate Local Workspace Specs`** (Creates PRD.md & TRD.md)
-
-### 4. Simulating Capsule Drag & Drop (Tauri WebSocket server)
-While the Extension Host window is active, run the loopback mock script in your terminal to simulate dragging a capsule:
-```bash
-node extension/send-persona.js
-```
-The extension will output a VS Code notification confirming the active persona has shifted to `BACKEND` and loading the workspace specs into the prompt.
 
 ---
 
-## 🔒 Security & Performance Features
-* **No Code Leaks:** Your proprietary source code does not go to the cloud. Only the planning comments and intent metadata (`intent_log.json`) are validated.
-* **PKCE Auth Callback:** Security-focused OAuth redirect handlers (`vscode://antigravity-agency/auth`) bypass iframe and embedded webview restrictions securely.
-* **Low Latency:** Using standard native Node.js HTTP handlers instead of wrapper overlays ensures network requests take <1.5s.
+## Commands
+
+| Command | What it does |
+|---|---|
+| `CapDrop: Open Capsule Library` | Opens the full capsule grid — browse, select, and manage your active team |
+| `CapDrop: Start Active Persona Session` | Starts an agent session with the currently active capsule |
+| `CapDrop: Run Integration Expert Build Loop` | Runs a build command with the Integration capsule in a repair loop |
+
+---
+
+## Optional: Tauri Desktop Widget
+
+The floating desktop widget shows your active capsule and lets you switch roles without opening VS Code's command palette.
+
+```bash
+cd tauri-capsule
+npm run tauri dev
+```
+
+Requires [Rust](https://rustup.rs) installed. The widget communicates with the extension over `ws://localhost:5050`.
+
+---
+
+## Optional: Spec Anchoring
+
+Drop a `PRD.md` and/or `TRD.md` in your workspace root. CapDrop appends them automatically to the active capsule's system prompt, giving the AI both role boundaries **and** project-specific constraints.
+
+No specs required — capsule boundaries work standalone.
+
+---
+
+## Privacy
+
+- Source code never leaves your machine
+- `intent_log.json` is local only
+- No telemetry, no analytics, no accounts required
+- No API keys — CapDrop injects prompts into your existing AI assistant
+
+---
+
+## Contributing
+
+Want to contribute a capsule, fix a bug, or suggest a feature?
+
+**See [CONTRIBUTING.md](CONTRIBUTING.md)**
+
+All capsule definitions live in `extension/src/prompts.ts` as entries in `ALL_PERSONAS`. One PR = one capsule.
+
+## License
+AGPL v3
+---
+
+## License
+
+MIT © [Antigravity](https://github.com/antigravity-dev)
