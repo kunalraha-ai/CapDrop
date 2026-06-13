@@ -1,128 +1,276 @@
+<div align="center">
+
 # CapDrop
 
-> **Drop a capsule. Shift your AI's role. Ship better code.**
+**Drop a capsule. Shift your AI's role. Ship better code.**
 
-CapDrop gives your AI coding assistant a **job title and a contract**. 
-Each capsule is a strict, role-specific system prompt that locks the AI 
-into one lane — frontend only, backend only, tests only — and prevents 
-it from "helpfully" doing work it wasn't asked to do.
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/antigravity.capdrop?color=0d0d0d&label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=antigravity.capdrop)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/antigravity.capdrop?color=0d0d0d)](https://marketplace.visualstudio.com/items?itemName=antigravity.capdrop)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-0d0d0d.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-No more AI that builds a database when you asked for a button.
-No more AI that rewrites your server when you asked for a CSS fix.
+[Install from Marketplace](#installation) · [Contribute a Capsule](CONTRIBUTING.md) · [Report a Bug](https://github.com/your-repo/capdrop/issues)
+
+</div>
 
 ---
 
 ## The Problem
 
-AI coding assistants are powerful but undisciplined. They're trained to 
-be helpful — which means when they hit a gap, they fill it. Ask for a 
-login form and you'll get a login form *plus* an auth controller, a 
-database schema, and a session handler you never asked for.
+AI coding assistants are powerful but undisciplined. Ask them to build a login form and you'll get a login form *plus* an auth controller, a database schema, and a session handler you never asked for.
 
-This creates integration nightmares. Files you didn't expect. Logic in 
-the wrong layer. A codebase that looks complete but is actually a 
-tangled mess owned by no one.
+This creates tangled codebases where files are owned by no one, logic lives in the wrong layer, and integration becomes a debugging session.
+
+## The Solution
+
+CapDrop gives your AI a **job title and a contract**. Each **Capsule** is a strict, role-specific system prompt that locks the AI into one lane — and when it hits the edge of its role, it stops and tells you exactly what needs to happen next instead of quietly doing someone else's job.
+Drop UI/UX capsule   →  AI builds frontend only
+Drop Backend capsule →  AI builds server + database only
+Drop QA capsule      →  AI writes tests only, never touches production code
 
 ---
 
-## How CapDrop Fixes It
+## How It Works
 
-CapDrop runs a **single AI session** at a time, locked to a specific 
-role via a system prompt called a **Capsule**. Each capsule defines:
+```mermaid
+flowchart TD
+    A([Developer opens workspace]) --> B[CapDrop activates on startup]
+    B --> C[Local WebSocket server starts on :5050]
+    C --> D{How do you want to shift capsule?}
 
-- Exactly which files the AI is allowed to touch
-- Exactly which files are forbidden
-- What to do when it hits the boundary of its role
-- What message to output when it needs to escalate
+    D -->|Command Palette| E[CapDrop: Open Capsule Library]
+    D -->|Tauri Desktop Widget| F[Click capsule card in floating overlay]
 
-When the AI reaches the edge of its role, it doesn't guess or overstep.
-It outputs:
-CAPSULE BOUNDARY REACHED: This task requires backend work.
-Please switch to the Backend capsule to complete: [one sentence].
-The frontend scaffold has been built to the extent possible.
+    E --> G[Select capsule from library grid]
+    F --> G
 
-Then it stops. You switch capsules. Work continues in the right lane.
+    G --> H[Capsule system prompt compiled]
+    H --> I{PRD.md / TRD.md in workspace root?}
+
+    I -->|Yes| J[Specs appended as anchored constraints]
+    I -->|No| K[Capsule boundary rules applied standalone]
+
+    J --> L[Full system prompt injected into AI session]
+    K --> L
+
+    L --> M[intent_log.json written to .gemini/]
+    M --> N[AI executes within capsule boundary]
+    N --> O{AI hits boundary of its role?}
+
+    O -->|No| P[Task completed in lane ✅]
+    O -->|Yes| Q[CAPSULE BOUNDARY REACHED message output]
+    Q --> R[Developer switches to correct capsule]
+    R --> G
+```
 
 ---
 
 ## Capsules
 
-| Capsule | Role | Allowed Files |
-|---|---|---|
-| 🎨 **UI / UX** | Frontend contractor | `.html`, `.css`, `/ui`, `/components`, `/pages` |
-| ⚙️ **Backend** | Backend contractor | `server.*`, `db.*`, `/routes`, `/migrations`, `.env` |
-| 🧪 **QA** | Test engineer | `*.test.*`, `*.spec.*`, `/tests`, `/e2e` |
-| 🔒 **Security** | Auditor | `SECURITY_AUDIT.md` only — reads everything, writes nothing else |
-| 🔗 **Integration** | Build repair | Import paths, build configs, tsconfig, package.json — no new features |
-| 🤪 **Emoji Decorator** | Chaos agent | Frontend files only — adds emojis, touches nothing else |
-| 📖 **Code Explainer** | Documenter | Adds docstrings and comments only — zero runtime changes |
+| Capsule | Role | Allowed Files | Forbidden |
+|---|---|---|---|
+| 🎨 **React Frontend** | Senior React Engineer | `.tsx`, `.jsx`, `/components`, `/pages`, `/ui` | Server files, database, `.env` |
+| ⚙️ **Backend Systems** | Senior Backend Engineer | `server.*`, `db.*`, `/routes`, `/migrations`, `.env` | Any frontend files |
+| 🧪 **QA Specialist** | Senior QA Engineer | `*.test.*`, `*.spec.*`, `/tests`, `/e2e` | Any production source code |
+| 🔒 **Security Audit** | App Security Engineer | `SECURITY_AUDIT.md` only | All production files |
+| 🔗 **Systems Integration** | Integration Auditor | Build configs, import paths, existing files with errors only | New features, new routes |
+| 🤪 **Emoji Decorator** | Chaos Frontend Agent | Frontend files — adds emojis | Backend files, anything outside `/ui` |
+| 📖 **Code Explainer** | Documentation Engineer | Existing files — adds docstrings only | Any runtime behavior changes |
+| 🌸 **Flower Decorator** | Botanical Frontend Agent | Frontend files — adds floral decorations | Backend files |
+
+Every capsule enforces a **hard boundary**. When the AI reaches the edge of its role it outputs:
+CAPSULE BOUNDARY REACHED: This task requires backend work.
+Please switch to the Backend capsule to complete: [one sentence description].
+The frontend scaffold has been built to the extent possible.
 
 ---
 
-## Bring Your Own Specs (Optional)
+## Architecture
 
-Drop a `PRD.md` and/or `TRD.md` in your workspace root and CapDrop 
-automatically appends them to the active capsule's system prompt as 
-anchored constraints. The AI must stay within both the capsule boundary 
-**and** your spec.
+```mermaid
+graph TB
+    subgraph VSCode ["VS Code Extension Host"]
+        EXT["extension.ts\nActivation + Auth"]
+        SERVER["server.ts\nWebSocket :5050"]
+        RUNNER["runner.ts\nSession Runner"]
+        PROMPTS["prompts.ts\nAll Capsule Definitions"]
+        LOGGER["logger.ts\nintent_log.json writer"]
+        VALIDATOR["validator.ts\nIntent Gate"]
+        TERMINAL["terminal.ts\nSecure Build Runner"]
+        INTEGRATION["integration.ts\nBuild Repair Loop"]
+        LIBRARY["library.ts\nWebview Panel"]
+    end
 
-No specs? No problem. Capsule boundaries apply regardless.
+    subgraph Tauri ["Tauri Desktop Widget (Optional)"]
+        APP["App.tsx\nCapsule Cards UI"]
+        RUST["main.rs\nWS Client + Session ID"]
+    end
+
+    subgraph Workspace ["Local Workspace"]
+        PRD["PRD.md (optional)"]
+        TRD["TRD.md (optional)"]
+        LOG[".gemini/intent_log.json"]
+    end
+
+    PROMPTS --> RUNNER
+    SERVER -->|persona_shift event| RUNNER
+    RUNNER --> LOGGER
+    RUNNER --> VALIDATOR
+    RUNNER --> TERMINAL
+    TERMINAL --> INTEGRATION
+    LIBRARY -->|team_sync event| SERVER
+    APP --> RUST
+    RUST -->|WebSocket message| SERVER
+    PRD --> RUNNER
+    TRD --> RUNNER
+    LOGGER --> LOG
+```
 
 ---
 
-## Intent Logging
+## Capsule Session State Machine
 
-Every session writes a structured log to `.gemini/intent_log.json` in 
-your workspace root. This records:
+```mermaid
+stateDiagram-v2
+    [*] --> Idle : Extension activates on startup
 
-- Which capsule is active
-- The session ID
-- The compiled system prompt
-- Proposed changes and validation hooks
+    Idle --> CapsuleSelected : Developer selects capsule
+    CapsuleSelected --> LoadingSpecs : Check workspace for PRD.md / TRD.md
 
-This log is local only. Nothing is sent to the cloud.
+    LoadingSpecs --> CompilingPrompt : Specs found — append to capsule prompt
+    LoadingSpecs --> CompilingPrompt : No specs — use capsule boundary rules only
+
+    CompilingPrompt --> SessionActive : Prompt compiled and injected
+    SessionActive --> IntentLogged : intent_log.json written
+
+    IntentLogged --> ValidationGate : Supabase validator called (if configured)
+    ValidationGate --> Executing : Approved
+    ValidationGate --> Blocked : Rejected
+    ValidationGate --> Executing : Developer override
+
+    Blocked --> Idle : Session aborted
+
+    Executing --> BoundaryReached : AI hits capsule edge
+    Executing --> Completed : Task finished in lane
+
+    BoundaryReached --> Idle : Developer switches capsule
+    Completed --> Idle : Ready for next capsule
+```
 
 ---
 
-## CapDrop Desktop Widget (Optional)
+## Project Structure
+capdrop/
+├── extension/                  # VS Code Extension (TypeScript)
+│   ├── src/
+│   │   ├── extension.ts        # Activation, auth, command registration
+│   │   ├── server.ts           # Local WebSocket server :5050
+│   │   ├── runner.ts           # Capsule session compiler and runner
+│   │   ├── prompts.ts          # ALL capsule definitions live here ←
+│   │   ├── logger.ts           # intent_log.json writer
+│   │   ├── validator.ts        # Intent validation gate
+│   │   ├── terminal.ts         # Secure build command executor
+│   │   ├── integration.ts      # Build repair loop
+│   │   ├── library.ts          # Capsule Library webview panel
+│   │   └── http.ts             # Native Node.js HTTP/HTTPS client
+│   ├── icon.png                # Extension icon (128x128)
+│   ├── package.json            # Extension manifest
+│   ├── README.md               # Marketplace README
+│   └── LICENSE                 # AGPL v3
+│
+├── tauri-capsule/              # Desktop Widget (Rust + React, optional)
+│   ├── src/
+│   │   ├── App.tsx             # Capsule card UI
+│   │   └── main.tsx            # React entry
+│   ├── src-tauri/
+│   │   ├── src/main.rs         # Rust WS client + session ID generation
+│   │   └── tauri.conf.json     # Borderless, always-on-top window config
+│   └── package.json
+│
+└── supabase/                   # Optional cloud validator (self-hosted)
+├── functions/
+│   └── intent-validator/
+│       └── index.ts        # Edge function: validates intent_log vs specs
+└── migrations/
+└── 20260608000000_init.sql
 
-The optional **CapDrop Tauri desktop widget** is a borderless, 
-always-on-top floating overlay that shows your active capsule team. 
-It communicates with the VS Code extension over a local WebSocket 
-(`ws://localhost:5050`). Clicking a capsule card in the widget shifts 
-the active role instantly without opening the command palette.
+---
+
+## Installation
+
+### From the Marketplace
+
+Search **CapDrop** in the VS Code Extensions panel or install via:
+
+```bash
+code --install-extension antigravity.capdrop
+```
+
+### From Source
+
+```bash
+git clone https://github.com/your-repo/capdrop
+cd capdrop/extension
+npm install
+npm run deploy
+```
+
+---
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `CapDrop: Open Capsule Library` | Opens the full capsule grid — browse, select, and manage your active team |
+| `CapDrop: Start Active Persona Session` | Starts an agent session with the currently active capsule |
+| `CapDrop: Run Integration Expert Build Loop` | Runs a build command with the Integration capsule in a repair loop |
+
+---
+
+## Optional: Tauri Desktop Widget
+
+The floating desktop widget shows your active capsule and lets you switch roles without opening VS Code's command palette.
+
+```bash
+cd tauri-capsule
+npm run tauri dev
+```
+
+Requires [Rust](https://rustup.rs) installed. The widget communicates with the extension over `ws://localhost:5050`.
+
+---
+
+## Optional: Spec Anchoring
+
+Drop a `PRD.md` and/or `TRD.md` in your workspace root. CapDrop appends them automatically to the active capsule's system prompt, giving the AI both role boundaries **and** project-specific constraints.
+
+No specs required — capsule boundaries work standalone.
 
 ---
 
 ## Privacy
 
-- Your source code never leaves your machine
+- Source code never leaves your machine
+- `intent_log.json` is local only
 - No telemetry, no analytics, no accounts required
-- No API keys needed — CapDrop injects prompts into your existing AI 
-  assistant, it does not make its own LLM calls
+- No API keys — CapDrop injects prompts into your existing AI assistant
 
 ---
 
 ## Contributing
 
-Want a new capsule? Found a bug? Have a feature idea?
+Want to contribute a capsule, fix a bug, or suggest a feature?
 
-**[Open an issue or PR on GitHub →](https://github.com/kunalraha-ai/CapDrop)**
+**See [CONTRIBUTING.md](CONTRIBUTING.md)**
 
-All capsules live in `prompts.ts` as entries in the `ALL_PERSONAS` 
-array. Contributing a capsule is as simple as adding one object and 
-opening a Pull Request:
+All capsule definitions live in `extension/src/prompts.ts` as entries in `ALL_PERSONAS`. One PR = one capsule.
 
-```typescript
-{
-  id: "your_capsule_id",
-  label: "Your Capsule Name", 
-  icon: "🚀",
-  description: "One line shown in the library",
-  accent: "#6366f1",
-  systemPrompt: `YOUR STRICT BOUNDARY PROMPT HERE`
-}
-```
+---
 
-Contributors whose capsules are merged get credited in the README and 
-listed as official capsule authors on the marketplace page.
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+You are free to use, study, and contribute to this project. Any commercial use, distribution, or derivative work must also be released under AGPL-3.0. For commercial licensing inquiries, open an issue or contact the maintainers directly.
+
+See the [LICENSE](LICENSE) file for full terms.
