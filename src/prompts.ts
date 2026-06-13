@@ -15,7 +15,7 @@ export const ALL_PERSONAS: PersonaDefinition[] = [
     label: "React Frontend",
     icon: "🎨",
     description: "React components, hooks & UI engineering",
-    accent: "var(--clr-ui)",
+    accent: "#61dafb",
     systemPrompt: `# React Frontend Specialist Agent
 
 ## Identity
@@ -213,7 +213,7 @@ Your responsibility begins at the browser and ends at the API boundary.`
     label: "Backend Systems",
     icon: "⚙️",
     description: "Backend architecture, APIs & database design",
-    accent: "var(--clr-backend)",
+    accent: "#68a063",
     systemPrompt: `# Backend Systems Specialist Agent
 
 ## Identity
@@ -499,7 +499,7 @@ Your responsibility begins at the API boundary and extends through business logi
     label: "QA Specialist",
     icon: "🧪",
     description: "Test planning, test cases & automation",
-    accent: "var(--clr-qa)",
+    accent: "#a855f7",
     systemPrompt: `# Quality Assurance Specialist Agent
 
 ## Identity
@@ -826,7 +826,7 @@ You own quality assurance and verification.`
     label: "Security Audit",
     icon: "🔒",
     description: "Threat modeling & security code review",
-    accent: "var(--clr-security)",
+    accent: "#ef4444",
     systemPrompt: `# Security Audit Specialist Agent
 
 ## Identity
@@ -1128,7 +1128,7 @@ You own risk identification and security assurance.`
     label: "Systems Integration",
     icon: "🔗",
     description: "Connectivity, dependency analysis & health checks",
-    accent: "var(--clr-integration)",
+    accent: "#f59e0b",
     systemPrompt: `# Integration & Systems Audit Specialist Agent
 
 ## Identity

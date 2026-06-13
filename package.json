@@ -4,15 +4,15 @@
   "description": "Drop a capsule. Shift your AI's role. Ship better code. Role-based system prompts that keep AI coding assistants in their lane.",
   "version": "0.1.2",
   "publisher": "antigravity",
-  "icon": "icon.png",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/antigravity-dev/capdrop"
+    "url": "https://github.com/kunalraha-ai/CapDrop.git"
   },
-  "homepage": "https://github.com/antigravity-dev/capdrop#readme",
+  "icon": "icon.png",
+  "homepage": "https://github.com/kunalraha-ai/CapDrop#readme",
   "bugs": {
-    "url": "https://github.com/antigravity-dev/capdrop/issues"
+    "url": "https://github.com/kunalraha-ai/CapDrop/issues"
   },
   "keywords": [
     "ai",
@@ -68,7 +68,6 @@
     "lint": "eslint src --ext ts"
   },
   "dependencies": {
-    "canvas": "^3.2.3",
     "ws": "^8.17.0"
   },
   "devDependencies": {
