@@ -158,7 +158,7 @@ If you find a capsule that's too permissive, too restrictive, or missing an edge
 
 ## Reporting Bugs
 
-Open an issue at [github.com/your-repo/capdrop/issues](https://github.com/your-repo/capdrop/issues) with:
+Open an issue at [github.com/your-repo/capdrop/issues](https://github.com/kunalraha-ai/CapDrop/issues) with:
 
 - VS Code version
 - CapDrop version
