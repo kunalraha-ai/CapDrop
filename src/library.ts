@@ -59,6 +59,18 @@ export function openCapsuleLibrary(context: vscode.ExtensionContext) {
               updateWebviewContent(context);
               break;
             }
+            case "activatePersona": {
+              const personaId: string = message.personaId;
+              agentOutputChannel.appendLine(`[Capsule Library] Activating persona: ${personaId}`);
+              await context.globalState.update("activePersona", personaId);
+              
+              // Trigger startAgent command to recompile system prompt
+              await vscode.commands.executeCommand("capdrop.startAgent");
+              
+              // Re-render webview
+              updateWebviewContent(context);
+              break;
+            }
           }
         } catch (msgErr: any) {
           agentOutputChannel.appendLine(`[Capsule Library] Error handling message from webview: ${msgErr.message || msgErr}`);
@@ -99,33 +111,42 @@ function updateWebviewContent(context: vscode.ExtensionContext) {
     (p) => !activeTeamIds.includes(p.id)
   );
 
-  currentPanel.webview.html = getWebviewHtml(activeTeam, libraryPersonas);
+  const activePersona = context.globalState.get<string>("activePersona") || "backend";
+
+  currentPanel.webview.html = getWebviewHtml(activeTeam, libraryPersonas, activePersona);
   } catch (err: any) {
     agentOutputChannel.appendLine(`[Capsule Library] Error rendering webview content: ${err.message || err}`);
   }
 }
 
-function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: PersonaDefinition[]): string {
+function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: PersonaDefinition[], activePersona: string): string {
   const activeCardsHtml = activeTeam
     .map(
-      (p, index) => `
-    <div class="card" draggable="true" data-id="${p.id}" data-index="${index}">
+      (p, index) => {
+        const isCurrent = p.id === activePersona;
+        return `
+    <div class="card ${isCurrent ? "current-active-card" : ""}" draggable="true" data-id="${p.id}" data-index="${index}" style="${isCurrent ? `border: 2px solid ${p.accent}; box-shadow: 0 0 15px ${p.accent}30;` : ""}">
       <div class="card-glow" style="background: radial-gradient(circle at 50% 50%, ${p.accent}15, transparent 60%); border-color: ${p.accent}40;"></div>
       <span class="card-icon" style="background: ${p.accent}15; color: ${p.accent};">${p.icon}</span>
       <div class="card-info">
         <div class="card-header-row">
           <span class="card-name">${p.label}</span>
-          <span class="active-badge" style="background: ${p.accent}20; color: ${p.accent};">Active Slot ${index + 1}</span>
+          ${isCurrent 
+            ? `<span class="active-badge" style="background: ${p.accent}; color: #0a0b10; font-weight: bold;">● Active Persona</span>` 
+            : `<span class="active-badge" style="background: ${p.accent}20; color: ${p.accent};">Active Team</span>`
+          }
         </div>
         <span class="card-desc">${p.description}</span>
       </div>
       <div class="card-actions">
+        ${!isCurrent ? `<button class="add-btn activate-btn" style="background: ${p.accent}20; border-color: ${p.accent}40; color: ${p.accent}; padding: 6px 12px;" onclick="activatePersona('${p.id}')">Activate</button>` : ""}
         <button class="action-btn" title="Move Up" onclick="moveUp(${index})" ${index === 0 ? "disabled" : ""}>▲</button>
         <button class="action-btn" title="Move Down" onclick="moveDown(${index})" ${index === activeTeam.length - 1 ? "disabled" : ""}>▼</button>
         <button class="action-btn remove-btn" title="Remove from Active Team" onclick="removePersona('${p.id}')">✕</button>
       </div>
     </div>
-  `
+  `;
+      }
     )
     .join("");
 
@@ -449,6 +470,13 @@ function getWebviewHtml(activeTeam: PersonaDefinition[], libraryPersonas: Person
       if (!teamIds.includes(id)) {
         updateTeam([...teamIds, id]);
       }
+    }
+
+    function activatePersona(id) {
+      vscode.postMessage({
+        command: 'activatePersona',
+        personaId: id
+      });
     }
 
     function moveUp(index) {
